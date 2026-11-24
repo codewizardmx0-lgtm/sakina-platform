@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة سكينة</title>
+<style>
+  body { font-family: Tahoma, Arial, sans-serif; background: #eef6f5; margin: 0; color: #1f2937; }
+  header { background: #1d6f63; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .admin { background: rgba(255,255,255,0.2); color: white; padding: 5px 12px; border-radius: 15px; text-decoration: none; font-size: 13px; }
+  .layout { display: flex; max-width: 1100px; margin: 20px auto; gap: 20px; padding: 0 15px; }
+  .main { flex: 3; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+  .side { flex: 1; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); height: fit-content; }
+  .hero { background: linear-gradient(135deg, #2a9d8f, #1d6f63); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; }
+  .card h4 { margin: 0 0 8px; color: #1d6f63; }
+  .btn { display: block; width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+  .btn-green { background: #1d6f63; color: white; }
+  .btn-light { background: #e6f4f1; color: #1d6f63; border: 1px solid #1d6f63; }
+  .btn-orange { background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; }
+  .box { display: none; max-width: 800px; margin: 20px auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+  .q-item { background: #f9fafb; padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #e5e7eb; }
+  .opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+  .opts label { background: white; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center; font-size: 13px; display: block; cursor: pointer; }
+  .opts input { display: none; }
+  .opts input:checked + label { background: #1d6f63; color: white; border-color: #1d6f63; }
+  .res { padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
+  @media (max-width: 700px) { .layout { flex-direction: column-reverse; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="font-size: 20px; font-weight: bold;">🌿 منصة سكينة</div>
+  <a href="#" class="admin" onclick="alert('مسار لوحة الإدارة /Admin')">⚙️ /Admin</a>
+</header>
+
+<div id="home" class="layout">
+  <div class="main">
+    <div class="hero">
+      <h2 style="margin:0 0 8px;">مساحتك الآمنة للهدوء والدعم النفسي</h2>
+      <p style="margin:0; font-size:14px; line-height:1.6;">نساعدك على فهم مشاعرك بكل سرية من خلال مقياس تقييم نفسي أولي ومحتوى توعوي يربطك بالمختصين.</p>
+    </div>
+    <h3 style="color:#1d6f63;">📖 المقالات التوعوية</h3>
+    <div class="cards">
+      <div class="card"><h4>🧘‍♂️ تهدئة القلق اليومي</h4><p style="font-size:13px; color:#555;">تقنية التنفس العميق لاستعادة الهدوء النفسي.</p></div>
+      <div class="card"><h4>🌱 الاحتراق النفسي</h4><p style="font-size:13px; color:#555;">خطوات عملية لاستعادة شغفك وطاقتك.</p></div>
+      <div class="card"><h4>🌙 إيقاف التفكير الزائد</h4><p style="font-size:13px; color:#555;">عادات مسائية تمنح عقلك الراحة قبل النوم.</p></div>
+    </div>
+    <button class="btn btn-green" style="font-size:16px; padding:15px;" onclick="go('quiz')">📝 ابدأ تجربة التقييم النفسي الآن</button>
+  </div>
+
+  <div class="side">
+    <h3 style="margin-top:0; color:#1d6f63; text-align:center;">🔐 بوابة الوصول</h3>
+    <button class="btn btn-green" onclick="alert('واجهة تسجيل الدخول')">تسجيل الدخول</button>
+    <button class="btn btn-light" onclick="alert('واجهة إنشاء حساب جديد')">إنشاء حساب جديد</button>
+    <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+    <button class="btn btn-orange" onclick="directDocs()">📞 أرقام المختصين</button>
+  </div>
+</div>
+
+<div id="quiz" class="box">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <h3 style="margin:0; color:#1d6f63;">📋 مقياس التقييم (14 سؤالاً)</h3>
+    <button onclick="go('home')" style="padding:6px 12px; border:1px solid #ccc; border-radius:6px; background:white;">🏠 الرئيسية</button>
+  </div>
+  <div id="q-container"></div>
+  <button class="btn btn-green" style="font-size:16px; margin-top:15px;" onclick="calc()">✨ إظهار النتيجة</button>
+</div>
+
+<div id="result" class="box">
+  <div id="res-box" class="res"></div>
+  <h3 style="color:#1d6f63;">🩺 أرقام المختصين للتواصل المباشر:</h3>
+  <div class="cards">
+    <div class="card"><h4>👨‍⚕️ د. أحمد المنصور</h4><p style="font-size:13px;">استشاري القلق والاكتئاب<br><b>📞 770000001</b></p></div>
+    <div class="card"><h4>👩‍⚕️ أ. سارة العبدلي</h4><p style="font-size:13px;">أخصائية الضغوط والاحتراق<br><b>📞 770000002</b></p></div>
+    <div class="card"><h4>👨‍⚕️ د. خالد السقاف</h4><p style="font-size:13px;">معالج واستشارات أسرية<br><b>📞 770000003</b></p></div>
+  </div>
+  <button class="btn btn-light" onclick="go('home')">🏠 العودة للرئيسية</button>
+</div>
+
+<script>
+  const qs = [
+    "[المزاج والاكتئاب] 1. هل تشعر بالحزن أو الإحباط معظم ساعات اليوم؟",
+    "[المزاج والاكتئاب] 2. هل فقدت الاهتمام أو المتعة في ممارسة الأنشطة المعتادة؟",
+    "[المزاج والاكتئاب] 3. هل تواجه صعوبة في النوم (أرق) أو النوم الزائد؟",
+    "[المزاج والاكتئاب] 4. هل تشعر بخمول مستمر ونقص في الطاقة؟",
+    "[المزاج والاكتئاب] 5. هل تواجه صعوبة في التركيز على المهام اليومية؟",
+    "[التوتر والقلق] 6. هل تشعر بالعصبية أو حدة المزاج بشكل مفرط؟",
+    "[التوتر والقلق] 7. هل تجد صعوبة في التحكم بالخوف أو القلق المستمر؟",
+    "[التوتر والقلق] 8. هل تشعر بضيق يمنعك من الاسترخاء والهدوء؟",
+    "[التوتر والقلق] 9. هل تشعر بالقلق من حدوث أمر سيئ دون مبرر واضح؟",
+    "[التوتر والقلق] 10. هل تعاني من أعراض جسدية للتوتر (ضربات قلب سريعة، صداع)؟",
+    "[الضغوط والاحتراق] 11. هل تشعر بالإرهاق الشديد بنهاية يوم العمل أو الدراسة؟",
+    "[الضغوط والاحتراق] 12. هل تشعر أن الضغوط اليومية تفوق قدرتك على التحمل؟",
+    "[الضغوط والاحتراق] 13. هل تشعر بضعف الشغف أو رغبة في الانعزال؟",
+    "[الضغوط والاحتراق] 14. هل يؤثر التفكير الزائد على جودة حياتك ونومك؟"
+  ];
+  const cont = document.getElementById('q-container');
+  qs.forEach((q, i) => {
+    cont.innerHTML += `<div class="q-item"><b>${q}</b><div class="opts">
+      <div><input type="radio" name="q${i}" id="a${i}" value="0"><label for="a${i}">أبداً (0)</label></div>
+      <div><input type="radio" name="q${i}" id="b${i}" value="1"><label for="b${i}">بعض الأيام (1)</label></div>
+      <div><input type="radio" name="q${i}" id="c${i}" value="2"><label for="c${i}">معظم الأيام (2)</label></div>
+      <div><input type="radio" name="q${i}" id="d${i}" value="3"><label for="d${i}">يومياً تقريباً (3)</label></div>
+    </div></div>`;
+  });
+  function go(id) {
+    document.getElementById('home').style.display = id === 'home' ? 'flex' : 'none';
+    document.getElementById('quiz').style.display = id === 'quiz' ? 'block' : 'none';
+    document.getElementById('result').style.display = id === 'result' ? 'block' : 'none';
+    window.scrollTo(0,0);
+  }
+  function calc() {
+    let s = 0, c = 0;
+    for(let i=0; i<14; i++) {
+      let el = document.querySelector(`input[name="q${i}"]:checked`);
+      if(el) { s += parseInt(el.value); c++; }
+    }
+    if(c < 14) return alert('يرجى الإجابة على جميع الأسئلة الـ 14');
+    let rb = document.getElementById('res-box');
+    if(s <= 14) { rb.style.background = '#dcfce7'; rb.innerHTML = `<h2>🌿 النتيجة: ${s} من 42 (مستوى منخفض)</h2><p>حالتك مستقرة، استمر في العادات الصحية وتصفح المقالات.</p>`; }
+    else if(s <= 28) { rb.style.background = '#fef3c7'; rb.innerHTML = `<h2>🌤️ النتيجة: ${s} من 42 (مستوى متوسط)</h2><p>تواجه بعض الضغوط، ننصحك بتمارين الاسترخاء أو استشارة مختص.</p>`; }
+    else { rb.style.background = '#fee2e2'; rb.innerHTML = `<h2>❤️‍🩹 النتيجة: ${s} من 42 (مستوى مرتفع)</h2><p>ننصحك بالتواصل المباشر مع أحد المختصين أدناه للحصول على الدعم.</p>`; }
+    go('result');
+  }
+  function directDocs() {
+    let rb = document.getElementById('res-box');
+    rb.style.background = '#e6f4f1';
+    rb.innerHTML = `<h2>📞 دليل المختصين النفسيين</h2><p>تواصل مباشرة وبكل سرية مع أحد المستشارين المعتمدين:</p>`;
+    go('result');
+  }
+</script>
+</body>
+</html>
