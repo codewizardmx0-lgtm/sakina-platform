@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المستشار النفسي - منصة سكينة</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header id="site-header"></header>
+
+    <main class="container">
+        <div class="dashboard-layout">
+            <!-- القائمة الجانبية للمستشار -->
+            <aside class="sidebar-card">
+                <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--cream-200);">
+                    <h2 id="sp-welcome-name" style="font-size: 16px; font-weight: 800; color: var(--sakina-800);"></h2>
+                    <span id="sp-approval-badge" class="badge" style="margin-top: 6px;"></span>
+                </div>
+                <button type="button" class="sidebar-btn active" onclick="switchSpTab('requests', this)">📩 طلبات التواصل الواردة</button>
+                <button type="button" class="sidebar-btn" onclick="switchSpTab('articles', this)">✍️ المقالات التوعوية</button>
+                <button type="button" class="sidebar-btn" onclick="switchSpTab('profile', this)">👨‍⚕️ ملفي المهني</button>
+            </aside>
+
+            <!-- المحتوى الرئيسي -->
+            <section id="sp-main-panel"></section>
+        </div>
+    </main>
+
+    <footer id="site-footer"></footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        /* ==============================================================
+           لوحة تحكم المستشار النفسي
+           ============================================================== */
+        let activeSpTab = 'requests';
+        let currentSpProfile = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const user = getCurrentUser();
+            if (!user || user.role !== 'specialist') {
+                window.location.href = 'login.html?role=specialist';
+                return;
+            }
+            renderSpecialistDashboard();
+        });
+
+        function switchSpTab(tab, btn) {
+            activeSpTab = tab;
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderSpecialistDashboard();
+        }
+
+        function renderSpecialistDashboard() {
+            const data = getSakinaData();
+            const user = getCurrentUser();
+            currentSpProfile = data.specialists.find(s => s.user_id === user.id) || data.specialists[0];
+
+            document.getElementById('sp-welcome-name').textContent = 'مرحباً، ' + user.name;
+            const badge = document.getElementById('sp-approval-badge');
+            if (currentSpProfile.is_approved) {
+                badge.className = 'badge badge-emerald';
+                badge.textContent = '✓ معتمد في دليل المستشارين';
+            } else {
+                badge.className = 'badge badge-amber';
+                badge.textContent = '⏳ حسابك قيد الاعتماد من الإدارة';
+            }
+
+            const panel = document.getElementById('sp-main-panel');
+
+            // التبويب 1: طلبات التواصل الواردة
+            if (activeSpTab === 'requests') {
+                const reqs = data.consultations.filter(c => c.specialist_id === currentSpProfile.id);
+                panel.innerHTML = `
+                    <div class="card">
+                        <h1 style="font-size: 20px; font-weight: 800; color: var(--sakina-800); margin-bottom: 16px;">
+                            📩 طلبات التواصل والاستشارة الأولية (${reqs.length})
+                        </h1>
+                        ${reqs.length === 0 ? '<p style="color: var(--text-muted);">لا توجد طلبات تواصل واردة حالياً.</p>' : reqs.map(r => `
+                            <div style="padding: 16px; border-radius: 14px; border: 1px solid var(--cream-200); background: var(--cream-50); margin-bottom: 12px;">
+                                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-bottom: 8px;">
+                                    <div>
+                                        <strong style="color: var(--sakina-900);">${r.beneficiary_name}</strong>
+                                        <span class="badge badge-sakina" style="margin-right: 6px;">${r.status}</span>
+                                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                                            📞 ${r.beneficiary_phone} • ⏰ ${r.preferred_time}
+                                            ${r.assessment_score !== null ? `• 📊 نتيجة التقييم: ${r.assessment_score}/42` : ''}
+                                        </p>
+                                    </div>
+                                    <div style="display: flex; gap: 6px;">
+                                        <button type="button" onclick="updateConsultStatus(${r.id}, 'contacted')" class="btn btn-secondary btn-sm">تم التواصل</button>
+                                        <button type="button" onclick="updateConsultStatus(${r.id}, 'completed')" class="btn btn-primary btn-sm">مكتمل</button>
+                                    </div>
+                                </div>
+                                ${r.notes ? `<p style="font-size: 13px; color: #374151; margin-bottom: 8px;">ملاحظة المستفيد: "${r.notes}"</p>` : ''}
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="sp-note-${r.id}" value="${r.specialist_notes || ''}" class="form-control" placeholder="ملاحظة المتابعة الخاصة بالمستشار...">
+                                    <button type="button" onclick="saveSpNote(${r.id})" class="btn btn-secondary btn-sm">حفظ</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // التبويب 2: كتابة وعرض المقالات
+            else if (activeSpTab === 'articles') {
+                const myArticles = data.articles.filter(a => a.author_id === user.id);
+                panel.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="card">
+                            <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 14px;">✍️ نشر مقال توعوي جديد</h2>
+                            <form onsubmit="submitNewArticle(event)">
+                                <div class="grid-2" style="gap: 12px;">
+                                    <div class="form-group">
+                                        <label class="form-label">عنوان المقال</label>
+                                        <input type="text" id="art-title" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">التصنيف</label>
+                                        <select id="art-cat" class="form-control">
+                                            <option value="القلق والتوتر">القلق والتوتر</option>
+                                            <option value="الضغوط والاحتراق">الضغوط والاحتراق</option>
+                                            <option value="النوم والهدوء">النوم والهدوء</option>
+                                            <option value="الصحة النفسية">الصحة النفسية</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">ملخص قصير</label>
+                                    <input type="text" id="art-summary" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">محتوى المقال</label>
+                                    <textarea id="art-content" rows="4" class="form-control" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">إرسال المقال للمراجعة والنشر</button>
+                            </form>
+                        </div>
+
+                        <div class="card">
+                            <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 12px;">📚 مقالاتي (${myArticles.length})</h2>
+                            ${myArticles.map(a => `
+                                <div style="padding: 12px; border-bottom: 1px solid var(--cream-200); display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong>${a.title}</strong>
+                                        <div style="font-size: 12px; color: var(--text-muted);">${a.category} • ${a.reading_time} دقائق</div>
+                                    </div>
+                                    <span class="badge ${a.status === 'approved' ? 'badge-emerald' : 'badge-amber'}">
+                                        ${a.status === 'approved' ? 'منشور ✓' : 'قيد المراجعة ⏳'}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // التبويب 3: تعديل الملف المهني
+            else if (activeSpTab === 'profile') {
+                panel.innerHTML = `
+                    <div class="card">
+                        <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 14px;">👨‍⚕️ تحديث بيانات ملفي المهني</h2>
+                        <form onsubmit="updateSpProfile(event)">
+                            <div class="grid-2" style="gap: 12px;">
+                                <div class="form-group">
+                                    <label class="form-label">المسمى الوظيفي</label>
+                                    <input type="text" id="prof-title" value="${currentSpProfile.title}" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">التخصص الدقيق</label>
+                                    <input type="text" id="prof-spec" value="${currentSpProfile.specialty}" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">سنوات الخبرة</label>
+                                    <input type="number" id="prof-exp" value="${currentSpProfile.experience_years}" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">رقم التواصل</label>
+                                    <input type="text" id="prof-phone" value="${currentSpProfile.contact_phone}" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">الشهادات العلمية</label>
+                                <input type="text" id="prof-certs" value="${currentSpProfile.certificates || ''}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">النبذة التعريفية</label>
+                                <textarea id="prof-bio" rows="3" class="form-control" required>${currentSpProfile.bio}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                        </form>
+                    </div>
+                `;
+            }
+        }
+
+        function updateConsultStatus(id, status) {
+            const data = getSakinaData();
+            const req = data.consultations.find(c => c.id === id);
+            if (req) req.status = status;
+            saveSakinaData(data);
+            renderSpecialistDashboard();
+        }
+
+        function saveSpNote(id) {
+            const data = getSakinaData();
+            const req = data.consultations.find(c => c.id === id);
+            if (req) req.specialist_notes = document.getElementById('sp-note-' + id).value;
+            saveSakinaData(data);
+            alert('✅ تم حفظ الملاحظة.');
+        }
+
+        function submitNewArticle(e) {
+            e.preventDefault();
+            const data = getSakinaData();
+            const user = getCurrentUser();
+            data.articles.unshift({
+                id: Date.now(),
+                author_id: user.id,
+                author_name: user.name,
+                title: document.getElementById('art-title').value.trim(),
+                category: document.getElementById('art-cat').value,
+                summary: document.getElementById('art-summary').value.trim(),
+                content: document.getElementById('art-content').value.trim(),
+                reading_time: 3,
+                status: 'pending'
+            });
+            saveSakinaData(data);
+            alert('✅ تم إرسال المقال بنجاح وهو قيد المراجعة من الإدارة.');
+            renderSpecialistDashboard();
+        }
+
+        function updateSpProfile(e) {
+            e.preventDefault();
+            const data = getSakinaData();
+            const sp = data.specialists.find(s => s.id === currentSpProfile.id);
+            sp.title = document.getElementById('prof-title').value;
+            sp.specialty = document.getElementById('prof-spec').value;
+            sp.experience_years = Number(document.getElementById('prof-exp').value);
+            sp.contact_phone = document.getElementById('prof-phone').value;
+            sp.certificates = document.getElementById('prof-certs').value;
+            sp.bio = document.getElementById('prof-bio').value;
+            saveSakinaData(data);
+            alert('✅ تم تحديث ملفك المهني بنجاح.');
+            renderSpecialistDashboard();
+        }
+    </script>
+</body>
+</html>

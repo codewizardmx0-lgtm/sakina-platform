@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتيجة التقييم النفسي - منصة سكينة</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header id="site-header"></header>
+
+    <main class="container-narrow" style="padding-top: 32px; padding-bottom: 50px;">
+        <!-- شريط الأزرار العلوي -->
+        <div class="no-print" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <h1 style="font-size: 24px; font-weight: 800; color: var(--sakina-800);">📊 تقرير التقييم النفسي الأولي</h1>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <button type="button" onclick="window.print()" class="btn btn-primary btn-sm">🖨️ طباعة / حفظ التقرير PDF</button>
+                <button type="button" onclick="openBreathingModal()" class="btn btn-soft btn-sm">🌬️ تمرين تنفس هادئ</button>
+                <a href="assessment.html" class="btn btn-secondary btn-sm">🔄 إعادة الاختبار</a>
+            </div>
+        </div>
+
+        <!-- حاوية النتيجة (تُملأ بواسطة JavaScript) -->
+        <div id="result-container" style="display: flex; flex-direction: column; gap: 24px;"></div>
+    </main>
+
+    <footer id="site-footer"></footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        /* ==============================================================
+           عرض نتيجة آخر تقييم نفسي وتفصيل المحاور الثلاثة
+           ============================================================== */
+        const SEVERITY_STYLES = {
+            low: {
+                bg: '#ECFDF5', border: '#A7F3D0', text: '#064E3B',
+                badgeBg: '#059669', icon: '🌿', label: 'مستوى منخفض (مستقر)'
+            },
+            moderate: {
+                bg: '#FFFBEB', border: '#FDE68A', text: '#78350F',
+                badgeBg: '#D97706', icon: '🌤️', label: 'مستوى متوسط'
+            },
+            high: {
+                bg: '#FFF1F2', border: '#FECDD3', text: '#881337',
+                badgeBg: '#E11D48', icon: '❤️‍🩹', label: 'مستوى مرتفع (يستدعي الاهتمام)'
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const data = getSakinaData();
+            const rawLast = localStorage.getItem(LAST_RESULT_KEY);
+            // إذا لم يوجد تقييم حديث، نعرض آخر تقييم مخزن في النظام
+            const assessment = rawLast
+                ? JSON.parse(rawLast)
+                : data.assessments[data.assessments.length - 1];
+
+            if (!assessment) {
+                document.getElementById('result-container').innerHTML = `
+                    <div class="card" style="text-align: center;">
+                        <p style="margin-bottom: 14px;">لم تقم بإجراء التقييم النفسي بعد.</p>
+                        <a href="assessment.html" class="btn btn-primary">ابدأ التقييم الآن</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const st = SEVERITY_STYLES[assessment.severity_level] || SEVERITY_STYLES.moderate;
+            const specialists = data.specialists.filter(s => s.is_approved).slice(0, 3);
+
+            const axes = [
+                { name: 'محور المزاج والاكتئاب', score: assessment.mood_score, max: 15 },
+                { name: 'محور التوتر والقلق', score: assessment.anxiety_score, max: 15 },
+                { name: 'محور الضغوط والاحتراق', score: assessment.burnout_score, max: 12 }
+            ];
+            const highestRatio = Math.max(...axes.map(a => a.score / a.max));
+
+            // بانر الدعم العاجل يظهر فقط في المستوى المرتفع
+            const crisisBanner = assessment.severity_level === 'high' && specialists[0] ? `
+                <div class="card" style="background: #FFF1F2; border: 2px solid #FDA4AF; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+                    <div>
+                        <h3 style="font-size: 16px; font-weight: 800; color: #881337;">🤍 لست وحدك — الدعم متاح لك الآن</h3>
+                        <p style="font-size: 13px; color: #9F1239; margin-top: 4px;">
+                            إذا كنت تمر بضائقة حادة أو تحتاج للتحدث مع شخص مختص فوراً، لا تتردد في الاتصال بالمختص المناوب.
+                        </p>
+                    </div>
+                    <a href="tel:${specialists[0].contact_phone}" class="btn" style="background: #E11D48; color: #fff;">
+                        📞 اتصال عاجل: ${specialists[0].contact_phone}
+                    </a>
+                </div>
+            ` : '';
+
+            document.getElementById('result-container').innerHTML = `
+                <!-- بطاقة النتيجة الرئيسية -->
+                <div class="card" style="background: ${st.bg}; border: 2px solid ${st.border}; color: ${st.text};">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px;">
+                        <div style="width: 78px; height: 78px; border-radius: 50%; background: rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; font-size: 36px;">
+                            ${st.icon}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                <span class="badge" style="background: ${st.badgeBg}; color: #fff; font-size: 12px; padding: 5px 12px;">
+                                    ${st.label}
+                                </span>
+                                <span style="font-weight: 800; font-size: 14px;">
+                                    الدرجة الكلية: ${assessment.total_score} من 42
+                                </span>
+                            </div>
+                            <p style="font-size: 15px; font-weight: 600; margin-bottom: 6px;">${assessment.recommendation}</p>
+                            <p style="font-size: 12px; opacity: 0.8;">* تنويه: هذا التقييم هو مؤشر توعوي أولي ولا يُعد تشخيصاً طبياً.</p>
+                        </div>
+                    </div>
+                </div>
+
+                ${crisisBanner}
+
+                <!-- تفصيل المحاور الثلاثة -->
+                <div class="grid-3">
+                    ${axes.map(axis => {
+                        const pct = Math.round((axis.score / axis.max) * 100);
+                        const isHighest = (axis.score / axis.max) === highestRatio && axis.score > 0;
+                        return `
+                            <div class="card" style="text-align: center; ${isHighest ? 'border: 2px solid #F59E0B;' : ''}">
+                                <div style="font-size: 12px; font-weight: 700; color: var(--text-muted);">
+                                    ${axis.name} ${isHighest ? '<span style="color:#D97706;">(الأعلى)</span>' : ''}
+                                </div>
+                                <div style="font-size: 30px; font-weight: 800; color: var(--sakina-800); margin: 10px 0;">
+                                    ${axis.score} <span style="font-size: 15px; color: #9CA3AF;">/ ${axis.max}</span>
+                                </div>
+                                <div class="progress-track" style="height: 8px;">
+                                    <div class="progress-fill" style="width: ${pct}%; background: ${isHighest ? '#F59E0B' : 'var(--sakina-500)'};"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <!-- التوصيات العملية -->
+                <div class="card">
+                    <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 12px;">
+                        💡 إرشادات وتوصيات مخصصة لحالتك
+                    </h2>
+                    <ul style="padding-right: 20px; font-size: 14px; color: #374151; line-height: 2;">
+                        <li>ممارسة تمارين التنفس العميق (4 ثوانٍ شهيق، 7 حبس، 8 زفير) مرتين يومياً لتقليل التوتر الجسدي.</li>
+                        <li>تقليل التعرض للشاشات والأخبار المقلقة قبل النوم بساعة، وتدوين المهام لتخفيف التفكير الزائد.</li>
+                        <li>التحدث مع مختص نفسي للحصول على خطة دعم مخصصة تساعدك على تجاوز الضغوط الحالية.</li>
+                    </ul>
+                </div>
+
+                <!-- أرقام المختصين وطلب الاستشارة -->
+                <div class="no-print">
+                    <div class="section-header" style="margin-bottom: 16px;">
+                        <h2 style="font-size: 20px; font-weight: 800; color: var(--sakina-800);">
+                            🩺 أرقام المختصين للتواصل المباشر أو طلب استشارة
+                        </h2>
+                        <a href="specialists.html" style="font-size: 13px; font-weight: 700; color: var(--sakina-700);">عرض الدليل الكامل ←</a>
+                    </div>
+                    <div class="grid-3">
+                        ${specialists.map(sp => `
+                            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <h3 style="font-size: 16px; font-weight: 800; color: var(--sakina-800);">${sp.name}</h3>
+                                    <p style="font-size: 12px; font-weight: 700; color: var(--sakina-600); margin-top: 2px;">${sp.specialty}</p>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">${sp.bio}</p>
+                                </div>
+                                <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+                                    <button type="button" onclick="openConsultationModal(${sp.id}, ${assessment.id})" class="btn btn-primary btn-sm btn-block">
+                                        📩 طلب تواصل أولي
+                                    </button>
+                                    <a href="tel:${sp.contact_phone}" class="btn btn-secondary btn-sm btn-block">
+                                        📞 اتصال: ${sp.contact_phone}
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>

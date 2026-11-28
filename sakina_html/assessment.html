@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مقياس التقييم النفسي الأولي - منصة سكينة</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header id="site-header"></header>
+
+    <main class="container-narrow" style="padding-top: 24px; padding-bottom: 40px;">
+        <!-- شريط التقدم المثبت في الأعلى -->
+        <div class="progress-sticky">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <h1 style="font-size: 22px; font-weight: 800; color: var(--sakina-800);">
+                        📋 مقياس التقييم النفسي الأولي (<span id="total-q-label">14</span> سؤالاً)
+                    </h1>
+                    <p style="font-size: 13px; color: var(--text-muted);">
+                        الرجاء اختيار إجابة واحدة تعبر عن حالتك خلال الأسبوعين الماضيين • سري تماماً
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" id="focus-toggle-btn" class="btn btn-secondary btn-sm" onclick="toggleFocusMode()">
+                        🎯 وضع التركيز (سؤال بسؤال)
+                    </button>
+                    <a href="index.html" class="btn btn-secondary btn-sm">🏠 الرئيسية</a>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="progress-track">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+                <span id="progress-text" style="font-size: 12px; font-weight: 800; color: var(--sakina-700); white-space: nowrap;">
+                    تقدم الإجابة: 0 / 14 (0%)
+                </span>
+            </div>
+        </div>
+
+        <!-- رسالة تنبيه في حال عدم إكمال جميع الأسئلة -->
+        <div id="validation-alert" class="alert alert-error" style="display: none;"></div>
+
+        <!-- نموذج الأسئلة -->
+        <form id="assessment-form" onsubmit="submitAssessment(event)">
+            <div id="questions-container"></div>
+
+            <div id="list-submit-wrap" style="margin-top: 20px;">
+                <button type="submit" class="btn btn-primary btn-lg btn-block" style="font-size: 17px;">
+                    ✨ إظهار النتيجة والتوصيات
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <footer id="site-footer"></footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        /* ==============================================================
+           منطق صفحة مقياس التقييم النفسي الأولي (14 سؤالاً)
+           ============================================================== */
+        const OPTIONS = [
+            { value: 0, label: 'أبداً' },
+            { value: 1, label: 'بعض الأيام' },
+            { value: 2, label: 'معظم الأيام' },
+            { value: 3, label: 'يومياً تقريباً' }
+        ];
+
+        const CATEGORY_BADGES = {
+            mood: 'badge-emerald',
+            anxiety: 'badge-amber',
+            burnout: 'badge-sakina'
+        };
+
+        let questions = [];
+        let answers = {};      // تخزين إجابات المستخدم: { questionId: score }
+        let focusMode = false; // وضع التركيز (سؤال واحد في كل مرة)
+        let currentIdx = 0;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const data = getSakinaData();
+            questions = data.questions.filter(q => q.is_active);
+            document.getElementById('total-q-label').textContent = questions.length;
+            renderQuestions();
+            updateProgress();
+        });
+
+        // التبديل بين وضع القائمة الكاملة ووضع التركيز
+        function toggleFocusMode() {
+            focusMode = !focusMode;
+            document.getElementById('focus-toggle-btn').textContent = focusMode
+                ? '📄 عرض القائمة الكاملة'
+                : '🎯 وضع التركيز (سؤال بسؤال)';
+            renderQuestions();
+        }
+
+        // اختيار إجابة لسؤال معين
+        function selectAnswer(questionId, value) {
+            answers[questionId] = value;
+            document.getElementById('validation-alert').style.display = 'none';
+            updateProgress();
+            renderQuestions();
+        }
+
+        // تحديث شريط التقدم
+        function updateProgress() {
+            const answeredCount = Object.keys(answers).length;
+            const total = questions.length;
+            const pct = total > 0 ? Math.round((answeredCount / total) * 100) : 0;
+
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('progress-text').textContent = `تقدم الإجابة: ${answeredCount} / ${total} (${pct}%)`;
+        }
+
+        // رسم الأسئلة على الشاشة
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            const listSubmitWrap = document.getElementById('list-submit-wrap');
+
+            if (focusMode) {
+                listSubmitWrap.style.display = 'none';
+                const q = questions[currentIdx];
+                const selected = answers[q.id];
+                const badgeCls = CATEGORY_BADGES[q.category] || 'badge-sakina';
+
+                container.innerHTML = `
+                    <div class="card" style="padding: 32px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+                            <span class="badge ${badgeCls}">${q.category_label}</span>
+                            <span style="font-size: 13px; font-weight: 700; color: var(--text-muted);">سؤال ${currentIdx + 1} من ${questions.length}</span>
+                        </div>
+                        <p style="font-size: 20px; font-weight: 800; color: var(--sakina-900); margin-bottom: 22px;">
+                            ${currentIdx + 1}. ${q.question_text}
+                        </p>
+                        <div class="grid-2" style="gap: 12px;">
+                            ${OPTIONS.map(opt => `
+                                <button type="button" onclick="selectAnswer(${q.id}, ${opt.value})"
+                                    class="option-btn ${selected === opt.value ? 'selected' : ''}" style="padding: 16px; justify-content: space-between;">
+                                    <span>${opt.label}</span>
+                                    <span class="option-score">${opt.value}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--cream-100);">
+                            <button type="button" class="btn btn-secondary" ${currentIdx === 0 ? 'disabled style="opacity:0.4;"' : ''} onclick="prevQuestion()">
+                                → السابق
+                            </button>
+                            ${currentIdx < questions.length - 1
+                                ? `<button type="button" class="btn btn-primary" onclick="nextQuestion()">التالي ←</button>`
+                                : `<button type="submit" class="btn btn-primary btn-lg">✨ إظهار النتيجة</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            } else {
+                listSubmitWrap.style.display = 'block';
+                container.innerHTML = questions.map((q, idx) => {
+                    const selected = answers[q.id];
+                    const badgeCls = CATEGORY_BADGES[q.category] || 'badge-sakina';
+                    return `
+                        <div class="question-card ${selected !== undefined ? 'answered' : ''}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span class="badge ${badgeCls}">${q.category_label}</span>
+                                <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">سؤال ${idx + 1} من ${questions.length}</span>
+                            </div>
+                            <p style="font-size: 16px; font-weight: 700; color: var(--sakina-900);">
+                                ${idx + 1}. ${q.question_text}
+                            </p>
+                            <div class="options-grid">
+                                ${OPTIONS.map(opt => `
+                                    <button type="button" onclick="selectAnswer(${q.id}, ${opt.value})"
+                                        class="option-btn ${selected === opt.value ? 'selected' : ''}">
+                                        <span>${opt.label}</span>
+                                        <span class="option-score">${opt.value}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                renderQuestions();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentIdx < questions.length - 1) {
+                currentIdx++;
+                renderQuestions();
+            }
+        }
+
+        // احتساب النتيجة النهائية وحفظ التقييم ثم الانتقال لصفحة النتيجة
+        function submitAssessment(e) {
+            e.preventDefault();
+            const answeredCount = Object.keys(answers).length;
+            if (answeredCount < questions.length) {
+                const alertEl = document.getElementById('validation-alert');
+                alertEl.textContent = `⚠️ يرجى الإجابة على جميع الأسئلة (${answeredCount} من ${questions.length} مكتمل).`;
+                alertEl.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // حساب مجموع كل محور
+            let moodScore = 0, anxietyScore = 0, burnoutScore = 0;
+            questions.forEach(q => {
+                const val = Number(answers[q.id] || 0);
+                if (q.category === 'mood') moodScore += val;
+                else if (q.category === 'anxiety') anxietyScore += val;
+                else if (q.category === 'burnout') burnoutScore += val;
+            });
+
+            const totalScore = moodScore + anxietyScore + burnoutScore;
+            const data = getSakinaData();
+
+            // مطابقة الدرجة مع قواعد التقييم الديناميكية
+            let matchedRule = data.scoringRules.find(r => totalScore >= r.min_score && totalScore <= r.max_score);
+            if (!matchedRule) {
+                matchedRule = data.scoringRules[1] || { level: 'moderate', recommendation: 'ننصحك بمتابعة حالتك واستشارة مختص.' };
+            }
+
+            const user = getCurrentUser();
+            const newAssessment = {
+                id: Date.now(),
+                user_id: user ? user.id : null,
+                total_score: totalScore,
+                mood_score: moodScore,
+                anxiety_score: anxietyScore,
+                burnout_score: burnoutScore,
+                severity_level: matchedRule.level,
+                recommendation: matchedRule.recommendation,
+                created_at: new Date().toISOString().slice(0, 10)
+            };
+
+            data.assessments.push(newAssessment);
+            saveSakinaData(data);
+            localStorage.setItem(LAST_RESULT_KEY, JSON.stringify(newAssessment));
+
+            // الانتقال إلى صفحة النتيجة
+            window.location.href = 'result.html';
+        }
+    </script>
+</body>
+</html>

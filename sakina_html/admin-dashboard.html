@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الإدارة - منصة سكينة</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header id="site-header"></header>
+
+    <main class="container">
+        <div class="dashboard-layout">
+            <!-- القائمة الجانبية للإدارة -->
+            <aside class="sidebar-card">
+                <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--cream-200);">
+                    <h2 style="font-size: 16px; font-weight: 800; color: var(--sakina-800);">⚙️ لوحة الإدارة</h2>
+                    <p style="font-size: 12px; color: var(--text-muted);">التحكم الكامل بمنصة سكينة</p>
+                </div>
+                <button type="button" class="sidebar-btn active" onclick="switchAdminTab('overview', this)">📊 نظرة عامة والتحليلات</button>
+                <button type="button" class="sidebar-btn" onclick="switchAdminTab('specialists', this)">🩺 المستشارون والاعتماد</button>
+                <button type="button" class="sidebar-btn" onclick="switchAdminTab('articles', this)">📖 المقالات التوعوية</button>
+                <button type="button" class="sidebar-btn" onclick="switchAdminTab('questions', this)">📋 أسئلة المقياس</button>
+                <button type="button" class="sidebar-btn" onclick="switchAdminTab('rules', this)">⚖️ قواعد احتساب الدرجات</button>
+                <button type="button" class="sidebar-btn" onclick="switchAdminTab('users', this)">👥 المستخدمون</button>
+            </aside>
+
+            <!-- المحتوى الرئيسي للوحة الإدارة -->
+            <section id="admin-main-panel"></section>
+        </div>
+    </main>
+
+    <footer id="site-footer"></footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        /* ==============================================================
+           لوحة تحكم الإدارة (Admin Dashboard)
+           ============================================================== */
+        let activeAdminTab = 'overview';
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const user = getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                window.location.href = 'login.html?role=admin';
+                return;
+            }
+            renderAdminDashboard();
+        });
+
+        function switchAdminTab(tab, btn) {
+            activeAdminTab = tab;
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderAdminDashboard();
+        }
+
+        function renderAdminDashboard() {
+            const data = getSakinaData();
+            const panel = document.getElementById('admin-main-panel');
+
+            const beneficiariesCount = data.users.filter(u => u.role === 'beneficiary').length;
+            const approvedSpCount = data.specialists.filter(s => s.is_approved).length;
+            const totalAssessments = data.assessments.length;
+            const totalConsultations = data.consultations.length;
+
+            // بطاقات الإحصائيات العلوية (KPI)
+            const kpiHTML = `
+                <div class="grid-4" style="margin-bottom: 24px;">
+                    <div class="card" style="padding: 18px;">
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">المستفيدون المسجلون</div>
+                        <div style="font-size: 28px; font-weight: 800; color: var(--sakina-800);">${beneficiariesCount}</div>
+                    </div>
+                    <div class="card" style="padding: 18px;">
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">المستشارون المعتمدون</div>
+                        <div style="font-size: 28px; font-weight: 800; color: var(--sakina-600);">${approvedSpCount}</div>
+                    </div>
+                    <div class="card" style="padding: 18px;">
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">التقييمات المنجزة</div>
+                        <div style="font-size: 28px; font-weight: 800; color: var(--sakina-800);">${totalAssessments}</div>
+                    </div>
+                    <div class="card" style="padding: 18px;">
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">طلبات التواصل</div>
+                        <div style="font-size: 28px; font-weight: 800; color: #D97706;">${totalConsultations}</div>
+                    </div>
+                </div>
+            `;
+
+            // 1. نظرة عامة والتحليلات
+            if (activeAdminTab === 'overview') {
+                const low = data.assessments.filter(a => a.severity_level === 'low').length;
+                const mod = data.assessments.filter(a => a.severity_level === 'moderate').length;
+                const high = data.assessments.filter(a => a.severity_level === 'high').length;
+                const pct = v => totalAssessments > 0 ? Math.round((v / totalAssessments) * 100) : 0;
+
+                panel.innerHTML = kpiHTML + `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                            <div>
+                                <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800);">📊 توزيع مستويات نتائج التقييم</h2>
+                                <p style="font-size: 12px; color: var(--text-muted);">إحصائيات مجهولة الهوية لإجمالي ${totalAssessments} تقييم</p>
+                            </div>
+                            <button type="button" onclick="exportCSV()" class="btn btn-primary btn-sm">📥 تصدير الإحصائيات (CSV)</button>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 6px;">
+                                    <span style="color: #047857;">🌿 مستوى منخفض (مستقر)</span>
+                                    <span>${low} (${pct(low)}%)</span>
+                                </div>
+                                <div class="progress-track"><div class="progress-fill" style="width:${pct(low)}%; background:#10B981;"></div></div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 6px;">
+                                    <span style="color: #B45309;">🌤️ مستوى متوسط</span>
+                                    <span>${mod} (${pct(mod)}%)</span>
+                                </div>
+                                <div class="progress-track"><div class="progress-fill" style="width:${pct(mod)}%; background:#F59E0B;"></div></div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 6px;">
+                                    <span style="color: #BE123C;">❤️‍🩹 مستوى مرتفع</span>
+                                    <span>${high} (${pct(high)}%)</span>
+                                </div>
+                                <div class="progress-track"><div class="progress-fill" style="width:${pct(high)}%; background:#E11D48;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 2. المستشارون والاعتماد
+            else if (activeAdminTab === 'specialists') {
+                panel.innerHTML = kpiHTML + `
+                    <div class="card">
+                        <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 16px;">🩺 إدارة واعتماد المستشارين</h2>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead><tr><th>الاسم</th><th>التخصص</th><th>الخبرة</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                                <tbody>
+                                    ${data.specialists.map(sp => `
+                                        <tr>
+                                            <td><strong>${sp.name}</strong><div style="font-size:11px; color:var(--text-muted);">${sp.contact_phone}</div></td>
+                                            <td>${sp.specialty}</td>
+                                            <td>${sp.experience_years} سنوات</td>
+                                            <td><span class="badge ${sp.is_approved ? 'badge-emerald' : 'badge-amber'}">${sp.is_approved ? 'معتمد ✓' : 'بانتظار الاعتماد'}</span></td>
+                                            <td>
+                                                <button type="button" onclick="toggleSpecialistApprove(${sp.id})" class="btn btn-sm ${sp.is_approved ? 'btn-danger' : 'btn-primary'}">
+                                                    ${sp.is_approved ? 'إلغاء الاعتماد' : 'اعتماد الآن'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 3. المقالات التوعوية
+            else if (activeAdminTab === 'articles') {
+                panel.innerHTML = kpiHTML + `
+                    <div class="card">
+                        <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 16px;">📖 مراجعة واعتماد المقالات التوعوية</h2>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead><tr><th>العنوان</th><th>الكاتب</th><th>التصنيف</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                                <tbody>
+                                    ${data.articles.map(a => `
+                                        <tr>
+                                            <td><strong>${a.title}</strong></td>
+                                            <td>${a.author_name}</td>
+                                            <td><span class="badge badge-sakina">${a.category}</span></td>
+                                            <td><span class="badge ${a.status === 'approved' ? 'badge-emerald' : 'badge-amber'}">${a.status === 'approved' ? 'منشور' : 'قيد المراجعة'}</span></td>
+                                            <td style="display:flex; gap:6px;">
+                                                ${a.status !== 'approved' ? `<button type="button" onclick="setArticleStatus(${a.id}, 'approved')" class="btn btn-primary btn-sm">نشر</button>` : ''}
+                                                <button type="button" onclick="deleteArticle(${a.id})" class="btn btn-danger btn-sm">حذف</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 4. أسئلة المقياس
+            else if (activeAdminTab === 'questions') {
+                panel.innerHTML = kpiHTML + `
+                    <div class="card" style="margin-bottom: 20px;">
+                        <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 12px;">➕ إضافة سؤال جديد للمقياس</h2>
+                        <form onsubmit="addNewQuestion(event)" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <select id="new-q-cat" class="form-control" style="width: 200px;">
+                                <option value="mood">المزاج والاكتئاب</option>
+                                <option value="anxiety">التوتر والقلق</option>
+                                <option value="burnout">الضغوط والاحتراق</option>
+                            </select>
+                            <input type="text" id="new-q-text" class="form-control" style="flex: 1;" placeholder="اكتب نص السؤال..." required>
+                            <button type="submit" class="btn btn-primary">إضافة</button>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 14px;">📋 الأسئلة الحالية (${data.questions.length})</h2>
+                        ${data.questions.map((q, idx) => `
+                            <div style="padding: 10px 0; border-bottom: 1px solid var(--cream-200); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                <div>
+                                    <span class="badge badge-sakina">${q.category_label}</span>
+                                    <span style="font-size: 14px; font-weight: 700; margin-right: 8px;">${idx + 1}. ${q.question_text}</span>
+                                </div>
+                                <button type="button" onclick="deleteQuestion(${q.id})" class="btn btn-danger btn-sm">حذف</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 5. قواعد احتساب الدرجات
+            else if (activeAdminTab === 'rules') {
+                panel.innerHTML = kpiHTML + `
+                    <div class="card">
+                        <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 16px;">⚖️ قواعد احتساب الدرجات والتوصيات</h2>
+                        ${data.scoringRules.map(r => `
+                            <div style="padding: 16px; border: 1px solid var(--cream-200); border-radius: 14px; margin-bottom: 12px;">
+                                <div style="font-weight: 800; color: var(--sakina-800); margin-bottom: 10px;">${r.label}</div>
+                                <div class="grid-2" style="gap: 10px; margin-bottom: 10px;">
+                                    <div>
+                                        <label class="form-label">الحد الأدنى للدرجة</label>
+                                        <input type="number" id="rule-min-${r.id}" value="${r.min_score}" class="form-control">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">الحد الأعلى للدرجة</label>
+                                        <input type="number" id="rule-max-${r.id}" value="${r.max_score}" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">نص التوصية</label>
+                                    <textarea id="rule-rec-${r.id}" rows="2" class="form-control">${r.recommendation}</textarea>
+                                </div>
+                                <button type="button" onclick="saveScoringRule(${r.id})" class="btn btn-primary btn-sm">حفظ القاعدة</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 6. المستخدمون
+            else if (activeAdminTab === 'users') {
+                panel.innerHTML = kpiHTML + `
+                    <div class="card">
+                        <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 16px;">👥 إدارة المستخدمين (${data.users.length})</h2>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                                <tbody>
+                                    ${data.users.map(u => `
+                                        <tr>
+                                            <td><strong>${u.name}</strong></td>
+                                            <td>${u.email}</td>
+                                            <td><span class="badge badge-sakina">${u.role}</span></td>
+                                            <td><span class="badge ${u.is_active ? 'badge-emerald' : 'badge-rose'}">${u.is_active ? 'نشط' : 'معطل'}</span></td>
+                                            <td>
+                                                ${u.role !== 'admin' ? `
+                                                    <button type="button" onclick="toggleUserActive(${u.id})" class="btn btn-sm ${u.is_active ? 'btn-danger' : 'btn-primary'}">
+                                                        ${u.is_active ? 'تعطيل' : 'تفعيل'}
+                                                    </button>
+                                                ` : '-'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleSpecialistApprove(id) {
+            const data = getSakinaData();
+            const sp = data.specialists.find(s => s.id === id);
+            if (sp) sp.is_approved = !sp.is_approved;
+            saveSakinaData(data);
+            renderAdminDashboard();
+        }
+
+        function setArticleStatus(id, status) {
+            const data = getSakinaData();
+            const art = data.articles.find(a => a.id === id);
+            if (art) art.status = status;
+            saveSakinaData(data);
+            renderAdminDashboard();
+        }
+
+        function deleteArticle(id) {
+            const data = getSakinaData();
+            data.articles = data.articles.filter(a => a.id !== id);
+            saveSakinaData(data);
+            renderAdminDashboard();
+        }
+
+        function addNewQuestion(e) {
+            e.preventDefault();
+            const data = getSakinaData();
+            const cat = document.getElementById('new-q-cat').value;
+            const labels = { mood: 'المزاج والاكتئاب', anxiety: 'التوتر والقلق', burnout: 'الضغوط والاحتراق' };
+            data.questions.push({
+                id: Date.now(),
+                category: cat,
+                category_label: labels[cat],
+                order_index: data.questions.length + 1,
+                question_text: document.getElementById('new-q-text').value.trim(),
+                is_active: true
+            });
+            saveSakinaData(data);
+            renderAdminDashboard();
+        }
+
+        function deleteQuestion(id) {
+            const data = getSakinaData();
+            data.questions = data.questions.filter(q => q.id !== id);
+            saveSakinaData(data);
+            renderAdminDashboard();
+        }
+
+        function saveScoringRule(id) {
+            const data = getSakinaData();
+            const rule = data.scoringRules.find(r => r.id === id);
+            if (rule) {
+                rule.min_score = Number(document.getElementById('rule-min-' + id).value);
+                rule.max_score = Number(document.getElementById('rule-max-' + id).value);
+                rule.recommendation = document.getElementById('rule-rec-' + id).value;
+                saveSakinaData(data);
+                alert('✅ تم تحديث قاعدة احتساب الدرجات.');
+            }
+        }
+
+        function toggleUserActive(id) {
+            const data = getSakinaData();
+            const u = data.users.find(x => x.id === id);
+            if (u) u.is_active = !u.is_active;
+            saveSakinaData(data);
+            renderAdminDashboard();
+        }
+
+        // تصدير التقييمات المجهولة بصيغة CSV
+        function exportCSV() {
+            const data = getSakinaData();
+            let csv = '\uFEFFID,Date,Mood,Anxiety,Burnout,Total,Severity\n';
+            data.assessments.forEach(a => {
+                csv += `${a.id},${a.created_at},${a.mood_score},${a.anxiety_score},${a.burnout_score},${a.total_score},${a.severity_level}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'sakina_assessments_stats.csv';
+            link.click();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المقالات التوعوية - منصة سكينة</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header id="site-header"></header>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 50px;">
+        <div style="text-align: center; max-width: 650px; margin: 0 auto 28px;">
+            <h1 class="section-title">📖 مكتبة المقالات التوعوية</h1>
+            <p class="section-subtitle">مقالات علمية مبسطة كتبها مستشارو منصة سكينة لمساعدتك على الهدوء النفسي والتوازن</p>
+        </div>
+
+        <!-- أزرار تصفية المقالات حسب التصنيف -->
+        <div id="category-filters" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 32px;"></div>
+
+        <!-- شبكة المقالات -->
+        <div id="articles-grid" class="grid-3"></div>
+    </main>
+
+    <footer id="site-footer"></footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        /* ==============================================================
+           عرض مكتبة المقالات التوعوية وتصفيتها حسب القسم
+           ============================================================== */
+        let activeCategory = 'الكل';
+
+        document.addEventListener('DOMContentLoaded', function () {
+            renderCategories();
+            renderArticles();
+        });
+
+        function setCategory(cat) {
+            activeCategory = cat;
+            renderCategories();
+            renderArticles();
+        }
+
+        function renderCategories() {
+            const data = getSakinaData();
+            const approved = data.articles.filter(a => a.status === 'approved');
+            const categories = ['الكل', ...new Set(approved.map(a => a.category))];
+
+            document.getElementById('category-filters').innerHTML = categories.map(cat => `
+                <button type="button" onclick="setCategory('${cat}')"
+                    class="btn btn-sm ${activeCategory === cat ? 'btn-primary' : 'btn-secondary'}"
+                    style="border-radius: 999px; padding: 8px 18px;">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function renderArticles() {
+            const data = getSakinaData();
+            let list = data.articles.filter(a => a.status === 'approved');
+            if (activeCategory !== 'الكل') {
+                list = list.filter(a => a.category === activeCategory);
+            }
+
+            document.getElementById('articles-grid').innerHTML = list.map(art => `
+                <div class="card card-hover" onclick="openArticleModal(${art.id})" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 12px;">
+                            <span class="badge badge-sakina">${art.category}</span>
+                            <span style="color: var(--text-muted);">${art.reading_time} دقائق قراءة</span>
+                        </div>
+                        <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 8px;">${art.title}</h2>
+                        <p style="font-size: 13px; color: var(--text-muted);">${art.summary}</p>
+                    </div>
+                    <div style="margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--cream-100); display: flex; justify-content: space-between; font-size: 12px;">
+                        <span style="color: var(--text-muted); font-weight: 600;">${art.author_name}</span>
+                        <span style="font-weight: 800; color: var(--sakina-600);">قراءة المقال ←</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

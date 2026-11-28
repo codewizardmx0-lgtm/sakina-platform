@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرئيسية - منصة سكينة</title>
+    <!-- ربط ملف التنسيقات الرئيسي -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- الشريط العلوي (يتم تعبئته تلقائياً من ملف main.js) -->
+    <header id="site-header"></header>
+
+    <main>
+        <!-- 1. قسم الترحيب الرئيسي (Hero Section) -->
+        <section class="hero-section">
+            <div class="container hero-grid">
+                <!-- الجانب الأيمن: النص التعريفي والأزرار -->
+                <div>
+                    <div class="pill-badge">
+                        <span>🌿</span>
+                        <span>مساحتك الرقمية الآمنة للدعم النفسي</span>
+                    </div>
+
+                    <h1 class="hero-title">
+                        مساحة آمنة لتهدأ...
+                        <span>وتفهم نفسك</span>
+                    </h1>
+
+                    <p class="hero-desc">
+                        منصة سكينة توفر لك تقييماً نفسياً أولياً موثوقاً من <span id="hero-q-count">14</span> سؤالاً، ومحتوى توعوياً هادئاً، واتصالاً مباشراً بمختصين معتمدين لدعم صحتك النفسية بكل سرية وخصوصية.
+                    </p>
+
+                    <div class="hero-buttons">
+                        <a href="assessment.html" class="btn btn-primary btn-lg">📝 ابدأ التقييم المجاني</a>
+                        <a href="specialists.html" class="btn btn-secondary btn-lg">🩺 تصفح المختصين</a>
+                        <button type="button" onclick="openBreathingModal()" class="btn btn-soft btn-lg">🌬️ تمرين تنفس هادئ</button>
+                    </div>
+
+                    <div class="trust-badges">
+                        <span><span class="trust-dot"></span>مختصون مرخصون</span>
+                        <span><span class="trust-dot"></span>تقييم أولي غير تشخيصي</span>
+                        <span><span class="trust-dot"></span>سرية تامة 100%</span>
+                    </div>
+                </div>
+
+                <!-- الجانب الأيسر: الصورة وبوابة الوصول السريع -->
+                <div>
+                    <div class="card">
+                        <div class="hero-image-wrap">
+                            <img src="images/hero-meditation.jpg" alt="مساحة آمنة للهدوء النفسي">
+                            <div class="hero-image-caption">
+                                &ldquo;هنا... يمكنك أن تكون على طبيعتك&rdquo;
+                            </div>
+                        </div>
+
+                        <div id="hero-portal-box" style="margin-bottom: 14px;">
+                            <!-- يتم تعبئتها عبر JavaScript حسب حالة تسجيل الدخول -->
+                        </div>
+
+                        <div style="border-top: 1px solid var(--cream-200); padding-top: 12px;">
+                            <a href="specialists.html" class="btn btn-amber btn-block btn-sm" style="padding: 10px;">
+                                📞 أرقام المختصين وطلب التواصل المباشر
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. قسم: كيف تعمل سكينة؟ (3 خطوات) -->
+        <section class="section section-soft">
+            <div class="container">
+                <div style="text-align: center; margin-bottom: 36px;">
+                    <h2 class="section-title">كيف تعمل سكينة؟</h2>
+                    <p class="section-subtitle">ثلاث خطوات بسيطة للبدء في رحلتك نحو الهدوء والاتزان النفسي</p>
+                </div>
+
+                <div class="grid-3">
+                    <div class="card step-card">
+                        <span class="step-number">1</span>
+                        <div style="font-size: 30px; margin-bottom: 10px;">📋</div>
+                        <h3 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 8px;">أجب على التقييم</h3>
+                        <p style="font-size: 14px; color: var(--text-muted);">
+                            أجب عن 14 سؤالاً علمياً مقسمة على محاور المزاج والقلق والضغوط خلال 3 دقائق فقط.
+                        </p>
+                    </div>
+
+                    <div class="card step-card">
+                        <span class="step-number">2</span>
+                        <div style="font-size: 30px; margin-bottom: 10px;">📊</div>
+                        <h3 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 8px;">احصل على رؤى شخصية</h3>
+                        <p style="font-size: 14px; color: var(--text-muted);">
+                            يحتسب النظام نتيجتك آلياً ويعرض لك تفصيلاً دقيقاً مع إمكانية طباعة التقرير PDF.
+                        </p>
+                    </div>
+
+                    <div class="card step-card">
+                        <span class="step-number">3</span>
+                        <div style="font-size: 30px; margin-bottom: 10px;">🩺</div>
+                        <h3 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 8px;">تواصل مع مختص</h3>
+                        <p style="font-size: 14px; color: var(--text-muted);">
+                            اختر المستشار المناسب من الدليل المعتمد وأرسل طلب تواصل أو اتصل به مباشرة بكل سرية.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. قسم: المقالات التوعوية -->
+        <section class="section">
+            <div class="container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">📖 المقالات التوعوية</h2>
+                        <p class="section-subtitle">محتوى إرشادي هادئ يساعدك على فهم مشاعرك والتعامل مع الضغوط اليومية</p>
+                    </div>
+                    <a href="articles.html" style="font-size: 14px; font-weight: 700; color: var(--sakina-700);">
+                        عرض جميع المقالات ←
+                    </a>
+                </div>
+
+                <!-- شبكة المقالات (تُعرض من JavaScript) -->
+                <div id="home-articles-grid" class="grid-4"></div>
+            </div>
+        </section>
+
+        <!-- 4. قسم: المختصون الموصى بهم -->
+        <section class="section section-cream">
+            <div class="container">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">🩺 المختصون الموصى بهم</h2>
+                        <p class="section-subtitle">جميع البيانات والسير الذاتية موثقة ومعتمدة من إدارة منصة سكينة</p>
+                    </div>
+                    <a href="specialists.html" class="btn btn-primary btn-sm" style="padding: 10px 18px;">
+                        دليل المستشارين الكامل
+                    </a>
+                </div>
+
+                <!-- شبكة المختصين (تُعرض من JavaScript) -->
+                <div id="home-specialists-grid" class="grid-3"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- التذييل السفلي (يتم تعبئته تلقائياً من ملف main.js) -->
+    <footer id="site-footer"></footer>
+
+    <!-- استدعاء ملفات JavaScript -->
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // كود خاص بالصفحة الرئيسية لعرض البيانات من localStorage
+        document.addEventListener('DOMContentLoaded', function () {
+            const data = getSakinaData();
+            const user = getCurrentUser();
+
+            // تحديث عدد الأسئلة الفعالة
+            const activeQuestions = data.questions.filter(q => q.is_active);
+            document.getElementById('hero-q-count').textContent = activeQuestions.length;
+
+            // 1. تعبئة بوابة الوصول السريع
+            const portalBox = document.getElementById('hero-portal-box');
+            if (user) {
+                let dashLink = 'profile.html';
+                if (user.role === 'admin') dashLink = 'admin-dashboard.html';
+                if (user.role === 'specialist') dashLink = 'specialist-dashboard.html';
+                portalBox.innerHTML = `
+                    <h3 style="font-size: 14px; font-weight: 800; color: var(--sakina-800); text-align: center; margin-bottom: 10px;">
+                        🔐 بوابة الوصول السريع
+                    </h3>
+                    <div style="padding: 10px; border-radius: 12px; background: var(--sakina-50); text-align: center; font-weight: 700; font-size: 14px; color: var(--sakina-800); margin-bottom: 10px;">
+                        مرحباً بك، ${user.name}
+                    </div>
+                    <a href="${dashLink}" class="btn btn-primary btn-block">الانتقال إلى لوحتي</a>
+                `;
+            } else {
+                portalBox.innerHTML = `
+                    <h3 style="font-size: 14px; font-weight: 800; color: var(--sakina-800); text-align: center; margin-bottom: 10px;">
+                        🔐 بوابة الوصول السريع للمستفيدين
+                    </h3>
+                    <div class="grid-2" style="gap: 10px;">
+                        <a href="login.html" class="btn btn-primary btn-block">تسجيل الدخول</a>
+                        <a href="login.html?tab=register" class="btn btn-secondary btn-block">إنشاء حساب</a>
+                    </div>
+                `;
+            }
+
+            // 2. عرض أحدث 4 مقالات معتمدة
+            const approvedArticles = data.articles.filter(a => a.status === 'approved').slice(0, 4);
+            const articlesGrid = document.getElementById('home-articles-grid');
+            articlesGrid.innerHTML = approvedArticles.map(art => `
+                <div class="card card-hover" onclick="openArticleModal(${art.id})" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 12px;">
+                            <span class="badge badge-sakina">${art.category}</span>
+                            <span style="color: var(--text-muted);">${art.reading_time} دقائق</span>
+                        </div>
+                        <h3 style="font-size: 16px; font-weight: 800; color: var(--sakina-800); margin-bottom: 8px;">${art.title}</h3>
+                        <p style="font-size: 13px; color: var(--text-muted);">${art.summary}</p>
+                    </div>
+                    <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--cream-100); display: flex; justify-content: space-between; font-size: 12px;">
+                        <span style="color: var(--text-muted);">${art.author_name}</span>
+                        <span style="font-weight: 800; color: var(--sakina-600);">اقرأ المزيد</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // 3. عرض أول 3 مستشارين معتمدين
+            const approvedSpecialists = data.specialists.filter(s => s.is_approved).slice(0, 3);
+            const spGrid = document.getElementById('home-specialists-grid');
+            spGrid.innerHTML = approvedSpecialists.map(sp => `
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 14px;">
+                            <div style="width: 48px; height: 48px; border-radius: 14px; background: var(--sakina-100); display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                                👨‍⚕️
+                            </div>
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 800; color: var(--sakina-800);">${sp.name}</h3>
+                                <p style="font-size: 12px; font-weight: 700; color: var(--sakina-600);">${sp.specialty}</p>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">${sp.bio}</p>
+                    </div>
+                    <div style="padding-top: 14px; border-top: 1px solid var(--cream-100); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">خبرة ${sp.experience_years} سنوات</span>
+                        <a href="tel:${sp.contact_phone}" class="btn btn-secondary btn-sm">📞 ${sp.contact_phone}</a>
+                    </div>
+                </div>
+            `).join('');
+        });
+    </script>
+</body>
+</html>

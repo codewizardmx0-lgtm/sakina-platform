@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي - منصة سكينة</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header id="site-header"></header>
+
+    <main class="container-narrow" style="padding-top: 32px; padding-bottom: 50px;">
+        <div id="profile-content" style="display: flex; flex-direction: column; gap: 24px;"></div>
+    </main>
+
+    <footer id="site-footer"></footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        /* ==============================================================
+           الملف الشخصي للمستفيد:
+           - الرسم البياني لتطور الدرجة عبر الزمن (SVG)
+           - متابعة المزاج اليومي
+           - سجل التقييمات السابقة وطلبات الاستشارة
+           ============================================================== */
+        const MOOD_OPTIONS = [
+            { key: 'happy', emoji: '😊', label: 'مرتاح' },
+            { key: 'calm', emoji: '🌿', label: 'هادئ' },
+            { key: 'anxious', emoji: '😟', label: 'قلق' },
+            { key: 'sad', emoji: '😔', label: 'حزين' },
+            { key: 'exhausted', emoji: '😫', label: 'مرهق' }
+        ];
+
+        const SEV_BADGES = {
+            low: { label: 'منخفض (مستقر)', cls: 'badge-emerald' },
+            moderate: { label: 'متوسط', cls: 'badge-amber' },
+            high: { label: 'مرتفع', cls: 'badge-rose' }
+        };
+
+        const REQ_BADGES = {
+            pending: { label: 'قيد الانتظار ⏳', cls: 'badge-amber' },
+            contacted: { label: 'تم التواصل 📞', cls: 'badge-sky' },
+            completed: { label: 'مكتمل ✓', cls: 'badge-emerald' },
+            cancelled: { label: 'ملغي ✕', cls: 'badge-gray' }
+        };
+
+        let selectedMood = 'calm';
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const user = getCurrentUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            renderProfile();
+        });
+
+        function renderProfile() {
+            const data = getSakinaData();
+            const user = getCurrentUser();
+
+            const myAssessments = data.assessments.filter(a => a.user_id === user.id);
+            const myRequests = data.consultations.filter(c => c.user_id === user.id);
+            const myMoods = data.moodLogs.filter(m => m.user_id === user.id);
+
+            // بناء الرسم البياني SVG
+            let chartHTML = '';
+            if (myAssessments.length > 0) {
+                const width = 520, height = 160, padX = 36, padY = 20;
+                const pts = myAssessments.map((a, idx) => {
+                    const x = myAssessments.length === 1
+                        ? width / 2
+                        : padX + (idx / (myAssessments.length - 1)) * (width - padX * 2);
+                    const y = height - padY - (a.total_score / 42) * (height - padY * 2);
+                    return { x, y, total: a.total_score, date: a.created_at.slice(5) };
+                });
+
+                const polyline = pts.map(p => `${p.x},${p.y}`).join(' ');
+                const refLines = [0, 14, 28, 42].map(val => {
+                    const y = height - padY - (val / 42) * (height - padY * 2);
+                    return `
+                        <line x1="${padX}" y1="${y}" x2="${width - padX}" y2="${y}" stroke="#EAE3D7" stroke-dasharray="4 4"/>
+                        <text x="${padX - 8}" y="${y + 4}" text-anchor="end" font-size="10" fill="#9CA3AF">${val}</text>
+                    `;
+                }).join('');
+
+                const dots = pts.map(p => `
+                    <circle cx="${p.x}" cy="${p.y}" r="6" fill="#2A9D8F" stroke="#fff" stroke-width="2"/>
+                    <text x="${p.x}" y="${p.y - 10}" text-anchor="middle" font-size="11" font-weight="bold" fill="#1B4D3E">${p.total}</text>
+                    <text x="${p.x}" y="${height - 4}" text-anchor="middle" font-size="10" fill="#6B7280">${p.date}</text>
+                `).join('');
+
+                chartHTML = `
+                    <div class="card">
+                        <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800);">📈 مؤشر تطور حالتك عبر الزمن</h2>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">انخفاض الدرجة الكلية (من 42) يعني تحسناً واستقراراً نفسياً أكبر</p>
+                        <svg viewBox="0 0 ${width} ${height}" style="width: 100%; max-width: 600px; display: block; margin: 0 auto;">
+                            ${refLines}
+                            ${pts.length > 1 ? `<polyline fill="none" stroke="#1D6F63" stroke-width="3" points="${polyline}"/>` : ''}
+                            ${dots}
+                        </svg>
+                    </div>
+                `;
+            }
+
+            document.getElementById('profile-content').innerHTML = `
+                <!-- بطاقة معلومات المستفيد -->
+                <div class="card" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 64px; height: 64px; border-radius: 18px; background: var(--sakina-100); display: flex; align-items: center; justify-content: center; font-size: 30px;">👤</div>
+                        <div>
+                            <h1 style="font-size: 22px; font-weight: 800; color: var(--sakina-800);">${user.name}</h1>
+                            <p style="font-size: 13px; color: var(--text-muted);">${user.email}</p>
+                            <span class="badge badge-sakina" style="margin-top: 4px;">مستفيد • بياناتك محفوظة بسرية تامة</span>
+                        </div>
+                    </div>
+                    <a href="assessment.html" class="btn btn-primary">📝 إجراء تقييم جديد</a>
+                </div>
+
+                ${chartHTML}
+
+                <!-- متابعة المزاج اليومي -->
+                <div class="card">
+                    <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 12px;">🌤️ كيف تشعر اليوم؟ (سجل المزاج اليومي)</h2>
+                    <form onsubmit="saveMoodLog(event)">
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                            ${MOOD_OPTIONS.map(m => `
+                                <button type="button" onclick="selectMood('${m.key}')"
+                                    class="btn btn-sm ${selectedMood === m.key ? 'btn-primary' : 'btn-secondary'}">
+                                    ${m.emoji} ${m.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="mood-note" class="form-control" placeholder="اكتب ملاحظة قصيرة عن يومك (اختياري)...">
+                            <button type="submit" class="btn btn-primary">حفظ</button>
+                        </div>
+                    </form>
+
+                    <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+                        ${myMoods.slice().reverse().map(m => {
+                            const opt = MOOD_OPTIONS.find(o => o.key === m.mood) || MOOD_OPTIONS[1];
+                            return `
+                                <div style="padding: 10px 14px; border-radius: 12px; background: var(--cream-50); border: 1px solid var(--cream-200); display: flex; justify-content: space-between; font-size: 13px;">
+                                    <span><strong>${opt.emoji} ${opt.label}</strong> ${m.note ? '— ' + m.note : ''}</span>
+                                    <span style="color: var(--text-muted); font-size: 12px;">${m.created_at}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+
+                <!-- سجل التقييمات السابقة -->
+                <div class="card">
+                    <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 14px;">📋 سجل تقييماتك السابقة (${myAssessments.length})</h2>
+                    ${myAssessments.length === 0
+                        ? `<p style="font-size: 13px; color: var(--text-muted);">لا توجد تقييمات مسجلة بعد.</p>`
+                        : `<div class="table-wrap"><table class="data-table">
+                            <thead><tr><th>التاريخ</th><th>الدرجة الكلية</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                            <tbody>
+                                ${myAssessments.slice().reverse().map(a => {
+                                    const b = SEV_BADGES[a.severity_level] || SEV_BADGES.moderate;
+                                    return `
+                                        <tr>
+                                            <td>${a.created_at}</td>
+                                            <td><strong>${a.total_score} / 42</strong></td>
+                                            <td><span class="badge ${b.cls}">${b.label}</span></td>
+                                            <td><button type="button" onclick="viewAssessment(${a.id})" class="btn btn-secondary btn-sm">عرض التقرير</button></td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                           </table></div>`
+                    }
+                </div>
+
+                <!-- طلبات الاستشارة المرسلة -->
+                <div class="card">
+                    <h2 style="font-size: 18px; font-weight: 800; color: var(--sakina-800); margin-bottom: 14px;">📩 طلبات الاستشارة الخاصة بك (${myRequests.length})</h2>
+                    ${myRequests.length === 0
+                        ? `<p style="font-size: 13px; color: var(--text-muted);">لم ترسل أي طلبات تواصل بعد.</p>`
+                        : myRequests.map(r => {
+                            const st = REQ_BADGES[r.status] || REQ_BADGES.pending;
+                            return `
+                                <div style="padding: 14px; border-radius: 14px; border: 1px solid var(--cream-200); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                    <div>
+                                        <strong style="color: var(--sakina-800);">${r.specialist_name}</strong>
+                                        <p style="font-size: 12px; color: var(--text-muted);">الوقت المفضل: ${r.preferred_time} • التاريخ: ${r.created_at}</p>
+                                    </div>
+                                    <span class="badge ${st.cls}">${st.label}</span>
+                                </div>
+                            `;
+                        }).join('')
+                    }
+                </div>
+            `;
+        }
+
+        function selectMood(key) {
+            selectedMood = key;
+            renderProfile();
+        }
+
+        function saveMoodLog(e) {
+            e.preventDefault();
+            const data = getSakinaData();
+            const user = getCurrentUser();
+            const note = document.getElementById('mood-note').value.trim();
+
+            data.moodLogs.push({
+                id: Date.now(),
+                user_id: user.id,
+                mood: selectedMood,
+                note: note,
+                created_at: new Date().toISOString().slice(0, 10)
+            });
+            saveSakinaData(data);
+            renderProfile();
+        }
+
+        function viewAssessment(id) {
+            const data = getSakinaData();
+            const found = data.assessments.find(a => a.id === id);
+            if (found) {
+                localStorage.setItem(LAST_RESULT_KEY, JSON.stringify(found));
+                window.location.href = 'result.html';
+            }
+        }
+    </script>
+</body>
+</html>
